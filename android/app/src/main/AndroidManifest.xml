@@ -33,6 +33,7 @@
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="myapp"/>
         <data android:scheme="com.anonymous.shoppinglistinator"/>
+        <data android:scheme="exp+shopping-listinator"/>
       </intent-filter>
     </activity>
   </application>

@@ -5,27 +5,29 @@ import {
   ExpoSpeechRecognitionModule,
   useSpeechRecognitionEvent,
 } from "expo-speech-recognition";
+import { Audio } from 'expo-av';
 
 export default function SpeechToText() {
   const [isRecording, setIsRecording] = useState(false);
   const [transcribedText, setTranscribedText] = useState('');
 
-  useSpeechRecognitionEvent("start", () => setRecognizing(true));
-  useSpeechRecognitionEvent("end", () => setRecognizing(false));
+  useSpeechRecognitionEvent("start", () => setIsRecording(true));
+  useSpeechRecognitionEvent("end", () => setIsRecording(false));
   useSpeechRecognitionEvent("result", (event) => {
-    setTranscript(event.results[0]?.transcript);
+    setTranscribedText(event.results[0]?.transcript);
   });
   useSpeechRecognitionEvent("error", (event) => {
     console.log("error code:", event.error, "error message:", event.message);
   });
 
   const startRecording = async () => {
-    let result;
+    let audioPermResult;
+    let speechReckPermResult;
     try {
-      
-       result = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
-    if (!result.granted) {
-      console.warn("Permissions not granted", result);
+       audioPermResult = await Audio.requestPermissionsAsync();
+       speechReckPermResult = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+    if (!audioPermResult.granted || !speechReckPermResult.granted) {
+      console.warn("Permissions not granted. 1. AudioPermission. 2. SpeechReckPermission", audioPermResult, speechReckPermResult);
       return;
     }
       setIsRecording(true);
@@ -37,8 +39,8 @@ export default function SpeechToText() {
       interimResults: true,
       continuous: false,
     });
-      if (result) {
-        setTranscribedText(result.text);
+      if (speechReckPermResult) {
+        setTranscribedText(speechReckPermResult.text);
       }
     } catch (error) {
       console.error('Error starting speech recognition:', error);
@@ -53,6 +55,7 @@ export default function SpeechToText() {
         style={[styles.button, isRecording && styles.recordingButton]}
         onPress={startRecording}
         disabled={isRecording}
+        
       >
         <Text style={styles.buttonText}>
           {isRecording ? 'Recording...' : 'Start Recording'}
@@ -61,11 +64,11 @@ export default function SpeechToText() {
 
       <TouchableOpacity
         style={[styles.button, isRecording && styles.recordingButton]}
-        onPress={ExpoSpeechRecognitionModule.stop()}
+        onPress={ExpoSpeechRecognitionModule.stop}
         disabled={!isRecording}
       >
         <Text style={styles.buttonText}>
-          {isRecording ? 'Recording...' : 'Start Recording'}
+          Stop Recording
         </Text>
       </TouchableOpacity>
       
