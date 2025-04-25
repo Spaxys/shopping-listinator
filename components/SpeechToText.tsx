@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, TextInput } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, TextInput, FlatList } from 'react-native';
 import { Audio } from 'expo-av';
 import { 
   ExpoSpeechRecognitionModule, 
   useSpeechRecognitionEvent 
 } from 'expo-speech-recognition';
 import { Picker } from '@react-native-picker/picker';
+import { MaterialIcons } from '@expo/vector-icons';
 
 const LANGUAGES = [
   { label: 'English (US)', value: 'en-US' },
@@ -15,23 +16,76 @@ const LANGUAGES = [
   // Add more languages as needed
 ];
 
+type TranscribedTextBoxProps = {
+  value: string;
+  onChange: (text: string) => void;
+  onAccept: () => void;
+  onClear: () => void;
+};
+
+function TranscribedTextBox({ value, onChange, onAccept, onClear }: TranscribedTextBoxProps) {
+  return (
+    <View style={styles.textContainer}>
+      <Text style={styles.text}>Transcribed Text:</Text>
+      <TextInput
+        style={styles.textInput}
+        value={value}
+        onChangeText={onChange}
+        multiline
+        placeholder="Your speech will appear here..."
+      />
+      <View style={styles.iconRow}>
+        <TouchableOpacity onPress={onAccept} disabled={!value.trim()}>
+          <MaterialIcons name="check-circle" size={32} color={value.trim() ? 'green' : '#ccc'} />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={onClear} disabled={!value.trim()}>
+          <MaterialIcons name="delete" size={32} color={value.trim() ? 'red' : '#ccc'} />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+type TranscribedListProps = {
+  items: string[];
+};
+
+function TranscribedList({ items }: TranscribedListProps) {
+  return (
+    <View style={styles.listContainer}>
+      <Text style={styles.text}>Accepted Items:</Text>
+      <FlatList
+        data={items}
+        keyExtractor={(_, idx) => idx.toString()}
+        renderItem={({ item }) => (
+          <View style={styles.listItem}>
+            <Text style={styles.listItemText}>{item}</Text>
+          </View>
+        )}
+        ListEmptyComponent={<Text style={styles.emptyListText}>No items yet.</Text>}
+      />
+    </View>
+  );
+}
+
 export default function SpeechToText() {
   const [isRecording, setIsRecording] = useState(false);
   const [transcribedText, setTranscribedText] = useState('');
   const [selectedLanguage, setSelectedLanguage] = useState('sv-SE');
- 
+  const [acceptedItems, setAcceptedItems] = useState<string[]>([]);
+
   useSpeechRecognitionEvent("result", (event) => {
-      if (event && event.results[0].transcript !== undefined) {
-        setTranscribedText(event.results[0].transcript);
-      }
-    });
-useSpeechRecognitionEvent("error", (event) => {
-      console.error('Speech recognition error:', event.error);
-      setIsRecording(false);
-    });
+    if (event && event.results[0].transcript !== undefined) {
+      setTranscribedText(event.results[0].transcript);
+    }
+  });
+  useSpeechRecognitionEvent("error", (event) => {
+    console.error('Speech recognition error:', event.error);
+    setIsRecording(false);
+  });
   useSpeechRecognitionEvent("end", () => {
-      setIsRecording(false);
-    });
+    setIsRecording(false);
+  });
 
   const startRecording = async () => {
     try {
@@ -71,9 +125,20 @@ useSpeechRecognitionEvent("error", (event) => {
     }
   };
 
+  const handleAccept = () => {
+    if (transcribedText.trim()) {
+      setAcceptedItems([...acceptedItems, transcribedText.trim()]);
+      setTranscribedText('');
+    }
+  };
+
+  const handleClear = () => {
+    setTranscribedText('');
+  };
+
   return (
     <View style={styles.container}>
-            <Text style={styles.text}>Select Language:</Text>
+      <Text style={styles.text}>Select Language:</Text>
       <Picker
         selectedValue={selectedLanguage}
         onValueChange={setSelectedLanguage}
@@ -91,16 +156,13 @@ useSpeechRecognitionEvent("error", (event) => {
           {isRecording ? 'Stop Recording' : 'Start Recording'}
         </Text>
       </TouchableOpacity>
-      <View style={styles.textContainer}>
-        <Text style={styles.text}>Transcribed Text:</Text>
-        <TextInput
-          style={styles.textInput}
-          value={transcribedText}
-          onChangeText={setTranscribedText}
-          multiline
-          placeholder="Your speech will appear here..."
-        />
-      </View>
+      <TranscribedTextBox
+        value={transcribedText}
+        onChange={setTranscribedText}
+        onAccept={handleAccept}
+        onClear={handleClear}
+      />
+      <TranscribedList items={acceptedItems} />
     </View>
   );
 }
@@ -133,6 +195,7 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     marginTop: 16,
+    marginBottom: 8,
   },
   text: {
     fontSize: 16,
@@ -149,5 +212,30 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     color: '#333',
     marginTop: 5,
+  },
+  iconRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 8,
+    gap: 16,
+  },
+  listContainer: {
+    flex: 1,
+    marginTop: 16,
+  },
+  listItem: {
+    padding: 12,
+    borderBottomColor: '#eee',
+    borderBottomWidth: 1,
+  },
+  listItemText: {
+    fontSize: 16,
+    color: '#222',
+  },
+  emptyListText: {
+    color: '#aaa',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: 16,
   },
 });
