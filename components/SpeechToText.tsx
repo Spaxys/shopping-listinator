@@ -5,11 +5,21 @@ import {
   ExpoSpeechRecognitionModule, 
   useSpeechRecognitionEvent 
 } from 'expo-speech-recognition';
+import { Picker } from '@react-native-picker/picker';
+
+const LANGUAGES = [
+  { label: 'English (US)', value: 'en-US' },
+  { label: 'Svenska', value: 'sv-SE' },
+  { label: 'German', value: 'de-DE' },
+  { label: 'French', value: 'fr-FR' },
+  // Add more languages as needed
+];
 
 export default function SpeechToText() {
   const [isRecording, setIsRecording] = useState(false);
   const [transcribedText, setTranscribedText] = useState('');
-
+  const [selectedLanguage, setSelectedLanguage] = useState('sv-SE');
+ 
   useSpeechRecognitionEvent("result", (event) => {
       if (event && event.results[0].transcript !== undefined) {
         setTranscribedText(event.results[0].transcript);
@@ -33,7 +43,7 @@ useSpeechRecognitionEvent("error", (event) => {
       }
       setIsRecording(true);
       ExpoSpeechRecognitionModule.start({
-        lang: "en-US",
+        lang: selectedLanguage,
         interimResults: true,
         continuous: false,
       });
@@ -63,6 +73,16 @@ useSpeechRecognitionEvent("error", (event) => {
 
   return (
     <View style={styles.container}>
+            <Text style={styles.text}>Select Language:</Text>
+      <Picker
+        selectedValue={selectedLanguage}
+        onValueChange={setSelectedLanguage}
+        style={styles.picker}
+      >
+        {LANGUAGES.map(lang => (
+          <Picker.Item key={lang.value} label={lang.label} value={lang.value} />
+        ))}
+      </Picker>
       <TouchableOpacity
         style={[styles.button, isRecording && styles.recordingButton]}
         onPress={handleRecordButton}
@@ -91,6 +111,10 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f7f7f7',
     justifyContent: 'flex-start',
+  },
+  picker: {
+    marginBottom: 16,
+    backgroundColor: '#fff',
   },
   button: {
     backgroundColor: '#007AFF',
