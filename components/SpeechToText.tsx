@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, TextInput, FlatList } from 'react-native';
 import { Audio } from 'expo-av';
 import { 
@@ -35,11 +35,11 @@ function TranscribedTextBox({ value, onChange, onAccept, onClear }: TranscribedT
         placeholder="Your speech will appear here..."
       />
       <View style={styles.iconRow}>
-        <TouchableOpacity onPress={onAccept} disabled={!value.trim()}>
-          <MaterialIcons name="check-circle" size={32} color={value.trim() ? 'green' : '#ccc'} />
-        </TouchableOpacity>
         <TouchableOpacity onPress={onClear} disabled={!value.trim()}>
           <MaterialIcons name="delete" size={32} color={value.trim() ? 'red' : '#ccc'} />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={onAccept} disabled={!value.trim()}>
+          <MaterialIcons name="check-circle" size={32} color={value.trim() ? 'green' : '#ccc'} />
         </TouchableOpacity>
       </View>
     </View>
@@ -48,21 +48,33 @@ function TranscribedTextBox({ value, onChange, onAccept, onClear }: TranscribedT
 
 type TranscribedListProps = {
   items: string[];
+  onRemove: (index: number) => void;
 };
 
-function TranscribedList({ items }: TranscribedListProps) {
+function TranscribedList({ items, onRemove }: TranscribedListProps) {
+  const flatListRef = useRef<FlatList<string>>(null);
+  
   return (
     <View style={styles.listContainer}>
       <Text style={styles.text}>Accepted Items:</Text>
       <FlatList
+        ref={flatListRef}
         data={items}
         keyExtractor={(_, idx) => idx.toString()}
-        renderItem={({ item }) => (
+        renderItem={({ item, index }) => (
           <View style={styles.listItem}>
             <Text style={styles.listItemText}>{item}</Text>
+            <TouchableOpacity onPress={() => onRemove(index)} style={{ marginLeft: 12 }}>
+              <MaterialIcons name="delete" size={24} color="red" />
+            </TouchableOpacity>
           </View>
         )}
         ListEmptyComponent={<Text style={styles.emptyListText}>No items yet.</Text>}
+        onContentSizeChange={() => {
+          if (flatListRef.current && items.length > 0) {
+            flatListRef.current.scrollToEnd({ animated: true });
+          }
+        }}
       />
     </View>
   );
@@ -136,6 +148,10 @@ export default function SpeechToText() {
     setTranscribedText('');
   };
 
+  const handleRemoveItem = (index: number) => {
+  setAcceptedItems(items => items.filter((_, i) => i !== index));
+};
+
   return (
     <View style={styles.container}>
       <Text style={styles.text}>Select Language:</Text>
@@ -162,7 +178,7 @@ export default function SpeechToText() {
         onAccept={handleAccept}
         onClear={handleClear}
       />
-      <TranscribedList items={acceptedItems} />
+      <TranscribedList items={acceptedItems} onRemove={handleRemoveItem}/>
     </View>
   );
 }
@@ -223,7 +239,9 @@ const styles = StyleSheet.create({
     flex: 1,
     marginTop: 16,
   },
-  listItem: {
+    listItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 12,
     borderBottomColor: '#eee',
     borderBottomWidth: 1,
