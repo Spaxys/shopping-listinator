@@ -1,12 +1,11 @@
-import React, { useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, TextInput, FlatList } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { Audio } from 'expo-av';
-import { 
-  ExpoSpeechRecognitionModule, 
-  useSpeechRecognitionEvent 
-} from 'expo-speech-recognition';
+import { ExpoSpeechRecognitionModule, useSpeechRecognitionEvent } from 'expo-speech-recognition';
 import { Picker } from '@react-native-picker/picker';
-import { MaterialIcons } from '@expo/vector-icons';
+import TranscribedTextBox from './TranscribedTextBox';
+import TranscribedList from './TranscribedList';
+import styles from '../styles/SpeechToText.styles';
 
 const LANGUAGES = [
   { label: 'English (US)', value: 'en-US' },
@@ -15,70 +14,6 @@ const LANGUAGES = [
   { label: 'French', value: 'fr-FR' },
   // Add more languages as needed
 ];
-
-type TranscribedTextBoxProps = {
-  value: string;
-  onChange: (text: string) => void;
-  onAccept: () => void;
-  onClear: () => void;
-};
-
-function TranscribedTextBox({ value, onChange, onAccept, onClear }: TranscribedTextBoxProps) {
-  return (
-    <View style={styles.textContainer}>
-      <Text style={styles.text}>Transcribed Text:</Text>
-      <TextInput
-        style={styles.textInput}
-        value={value}
-        onChangeText={onChange}
-        multiline
-        placeholder="Your speech will appear here..."
-      />
-      <View style={styles.iconRow}>
-        <TouchableOpacity onPress={onClear} disabled={!value.trim()}>
-          <MaterialIcons name="delete" size={32} color={value.trim() ? 'red' : '#ccc'} />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={onAccept} disabled={!value.trim()}>
-          <MaterialIcons name="check-circle" size={32} color={value.trim() ? 'green' : '#ccc'} />
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-}
-
-type TranscribedListProps = {
-  items: string[];
-  onRemove: (index: number) => void;
-};
-
-function TranscribedList({ items, onRemove }: TranscribedListProps) {
-  const flatListRef = useRef<FlatList<string>>(null);
-  
-  return (
-    <View style={styles.listContainer}>
-      <Text style={styles.text}>Accepted Items:</Text>
-      <FlatList
-        ref={flatListRef}
-        data={items}
-        keyExtractor={(_, idx) => idx.toString()}
-        renderItem={({ item, index }) => (
-          <View style={styles.listItem}>
-            <Text style={styles.listItemText}>{item}</Text>
-            <TouchableOpacity onPress={() => onRemove(index)} style={{ marginLeft: 12 }}>
-              <MaterialIcons name="delete" size={24} color="red" />
-            </TouchableOpacity>
-          </View>
-        )}
-        ListEmptyComponent={<Text style={styles.emptyListText}>No items yet.</Text>}
-        onContentSizeChange={() => {
-          if (flatListRef.current && items.length > 0) {
-            flatListRef.current.scrollToEnd({ animated: true });
-          }
-        }}
-      />
-    </View>
-  );
-}
 
 export default function SpeechToText() {
   const [isRecording, setIsRecording] = useState(false);
@@ -149,8 +84,8 @@ export default function SpeechToText() {
   };
 
   const handleRemoveItem = (index: number) => {
-  setAcceptedItems(items => items.filter((_, i) => i !== index));
-};
+    setAcceptedItems(items => items.filter((_, i) => i !== index));
+  };
 
   return (
     <View style={styles.container}>
@@ -178,82 +113,7 @@ export default function SpeechToText() {
         onAccept={handleAccept}
         onClear={handleClear}
       />
-      <TranscribedList items={acceptedItems} onRemove={handleRemoveItem}/>
+      <TranscribedList items={acceptedItems} onRemove={handleRemoveItem} />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    padding: 24,
-    flex: 1,
-    backgroundColor: '#f7f7f7',
-    justifyContent: 'flex-start',
-  },
-  picker: {
-    marginBottom: 16,
-    backgroundColor: '#fff',
-  },
-  button: {
-    backgroundColor: '#007AFF',
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  recordingButton: {
-    backgroundColor: '#FF3B30',
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  textContainer: {
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  text: {
-    fontSize: 16,
-    marginBottom: 8,
-    color: '#333',
-  },
-  textInput: {
-    minHeight: 60,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 10,
-    fontSize: 18,
-    backgroundColor: '#fff',
-    color: '#333',
-    marginTop: 5,
-  },
-  iconRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: 8,
-    gap: 16,
-  },
-  listContainer: {
-    flex: 1,
-    marginTop: 16,
-  },
-    listItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderBottomColor: '#eee',
-    borderBottomWidth: 1,
-  },
-  listItemText: {
-    fontSize: 16,
-    color: '#222',
-  },
-  emptyListText: {
-    color: '#aaa',
-    fontStyle: 'italic',
-    textAlign: 'center',
-    marginTop: 16,
-  },
-});
