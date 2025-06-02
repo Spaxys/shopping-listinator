@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "com.yourname.shoppinglistinator",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "jsEngine": "hermes",
@@ -13,19 +13,17 @@
       "supportsTablet": true,
       "infoPlist": {
         "NSSpeechRecognitionUsageDescription": "Allow $(PRODUCT_NAME) to use speech recognition.",
-        "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to use the microphone."
-      }
+        "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to use the microphone.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "bundleIdentifier": "com.yourname.shoppinglistinator"
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
+      "package": "com.yourname.shoppinglistinator",
+      "googleServicesFile": "./google-services.json",
       "permissions": [
-        "android.permission.RECORD_AUDIO",
         "android.permission.RECORD_AUDIO"
-      ],
-      "package": "com.anonymous.shoppinglistinator"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -44,10 +42,23 @@
         }
       ],
       "expo-speech-recognition",
-      "expo-dev-client"
+      "@react-native-google-signin/google-signin",
+      "expo-secure-store",
+      "expo-document-picker"
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "2b43818f-dd71-4801-abbc-7e19f198fdac"
+      }
+    },
+    "hooks": {
+      "prebuild": "./scripts/prebuild.js"
     }
   }
 }

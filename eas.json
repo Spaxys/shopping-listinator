@@ -1,0 +1,25 @@
+{
+  "cli": {
+    "version": ">= 16.6.2",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "GOOGLE_SERVICES_JSON": "$(GOOGLE_SERVICES_JSON)",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "$(EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID)"
+      }
+    },
+    "preview": {
+      "distribution": "internal"
+    },
+    "production": {
+      "autoIncrement": true
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
